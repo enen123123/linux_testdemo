@@ -1,0 +1,277 @@
+# 项目部署上线，更改为false\'*'
+# *表示不限制访问的主机ip地址
+DEBUG = False
+
+ALLOWED_HOSTS = ['*']
+
+linux:远程主机：192.168.91.110
+登录名：root
+密码：123456
+
+《单进程运行》
+
+useradd hello 增加一个用户，自动存在/home文件下
+passwd hello 设置更改密码
+mkdir pythonnodes   创建文件夹，存储源文件和虚拟环境
+
+xftp传输文件时需要用root用户，普通用户无法上传
+
+将项目zip压缩，上传到指定位置
+yum install -y unzip zip	安装zip压缩解压工具
+unzip testdemo.zip  解压压缩包
+rm -rf testdemo.zip  解压后删除压缩包
+
+下载虚拟环境（virtualenv）需要pip
+
+安装pip方法一
+yum安装pip   
+yum -y install epel-release
+yum -y install python-pip
+yum是一个在 Fedora 和 RedHat 以及 CentOS 中的 Shell 前端软件包管理器。
+pip是一个安装和管理 Python 包的工具
+
+安装pip方法二（已验证）
+安装python3   https://zhuanlan.zhihu.com/p/142097087
+gcc --versions    检查gcc，python的编译器
+yum -y install gcc    安装编译器   本身的依赖
+yum -y install zlib*     编译安装python3过程中的依赖包
+yum -y install libffi-devel     依赖包
+yum -y install openssl-devel      依赖包
+python --version  查看python版本，一般自带python2
+
+/usr/bin    系统自带的python，sqlite3等软件位置
+/usr/lib/  或者  /usr/local/     常用python，sqlite3等安装位置
+cd ~   根目录，相当于cd /root
+在根目录下下载网址下的tgz文件包，也可以通过xftp传递
+
+这里选择python的版本时，需要提前熟悉python对应的工具版本
+网上寻找一套版本最好，其次是全部采用最新版本
+wget https://www.python.org/ftp/python/3.10.0/Python-3.10.0.tgz  
+tar -zxvf Python-3.10.0.tgz  解压
+mkdir /usr/lib/python3.10   创建文件夹存储python3.10
+./configure --prefix=/usr/lib/python3.10    配置，选择python安装位置
+make   编译
+make install   安装
+
+创建或者修改python3和pip3软连接：类似于快捷键
+若是要更换以前的则需要rm -f 删除后者，例如：/usr/bin/python3
+也可以通过mv迁移到一个位置存储，以防万一
+ln -s /usr/lib/python3.10/bin/python3.10 /usr/bin/python3
+ln -s /usr/lib/python3.10/bin/pip3.10 /usr/bin/pip3
+ln -s /usr/bin/pip3 /usr/bin/pip
+删除系统自带python2的链接，更换为python3
+rm -f /usr/bin/python
+ln -s /usr/bin/python3 /usr/bin/python
+ll /usr/bin/ |grep python   查看指定目录下的python的目录
+python --version	查看python版本
+
+将yum的路径改为自带python2.7的路径，原路径被更改
+修改yum配置文件，下面两个文件都要修改
+vi /usr/bin/yum
+vi /usr/libexec/urlgrabber-ext-down
+第一行#!/usr/bin/python把修改为#!/usr/bin/python2.7
+
+pip list   查看对应pip列表
+pip install --upgrade pip   可能pip需要更新
+pip install virtualenv   安装虚拟环境
+pip安装的虚拟环境在pip对应python的bin目录下
+
+可能需要将虚拟环境配置到环境变量
+find / -name 'virtualenv.py'    寻找虚拟环境文件
+vim /etc/profile   修改环境变量的文件
+PATH=$PATH:/usr/lib/python3.10/bin   # 将下面内容添加到文件的最下面,这里地址根据虚拟环境的位置编写
+
+创建虚拟环境文件，命名，选择python版本，版本最好是系统有的
+virtualenv testdemo-env --python=python3.10   
+进入虚拟环境文件后，进入bin目录下，会有一个activate文件
+source activate    激活虚拟环境
+deactivate   退出虚拟环境
+
+pip list   进入虚拟环境，安装运行某文件所需要的模块，例如：django、mysql等
+pip install django	安装所需模块
+在激活某个虚拟环境后，进入源文件(testdemo)下寻找manage.py
+python manage.py migrate    可能需要牵引文件
+运行、设置端口，需要设置为和本机接入端口ip一致才可访问，端口可以更改，8000之后的一定能用
+0.0.0.0指的是本机上的所有IPV4地址
+python manage.py runserver 192.168.91.110:8000   
+
+出现的问题：
+所有的模块需要相互匹配，要么全部最新版，要么网上查找常用的版本和配套
+yum -y install sqlite*    安装默认数据库的模块
+django版本和sqlite3的版本不符，需要升级或者降级某一个
+https://blog.csdn.net/qq_39969226/article/details/92218635
+
+django降级：
+pip uninstall django    卸载django
+pip install django==2.1.8     安装低版本,需要查清楚每个模块所对应的版本
+
+sqlite3升级：
+cd ~
+直接获取tar文件，也可到官网下载，xftp传输
+wget https://www.sqlite.org/2019/sqlite-autoconf-3270200.tar.gz  
+tar -zxvf sqlite-autoconf-3270200.tar.gz   解压
+cd sqlite-autoconf-3270200   进入文件，含有命令configure
+./configure --prefix=/usr/lib   配置，安装位置
+make  编译
+make install   安装
+
+find /usr/ -name sqlite3    查看sqlite3位置
+/usr/lib/bin/sqlite3 --version   查看新安装的sqlite3的版本
+/usr/bin/sqlite3 --version   查看旧的默认的sqlite3的版本
+sqlite3 --version   查看正在使用的sqlite3的版本
+mv /usr/bin/sqlite3  /usr/bin/sqlite3_old    迁移旧sqlite3到一个文件，备用
+ln -s /usr/lib/bin/sqlite3   /usr/bin/sqlite3    软连接新的sqlite3
+sqlite3 --version    检查链接后的sqlite3版本
+
+设置环境变量的方法，未放置在PATH的无法调用
+echo $PATH    查看环境变量
+暂时性方法：
+将新的sqlite3位置加入环境变量，三种都可以试试
+export LD_LIBRARY_PATH="/usr/lib/bin/"   
+export LD_LIBRARY_PATH=LD_LIBRARY_PATH:/usr/lib/bin/
+export PATH=PATH:/usr/lib/bin/
+永久性方法：
+一种环境变量文件
+vi /etc/profile   在系统文件中，
+修改环境变量文件，将暂时性方法的语句加入文件末尾，
+source /etc/profile     完成更改后，将其运行
+二种环境变量文件
+vim ~/.bashrc
+export LD_LIBRARY_PATH="/usr/local/lib"
+source ~/.bashrc   
+
+环境变量都设置了，sqlite3也更新了，但是python和虚拟环境的sqlite3依旧显示是旧版本
+所以直接将产生错误提示的文件修改，忽略其错误，应该是改文件信息未及时更新
+https://cloud.tencent.com/developer/article/1639633
+vi /lib/python3.6/site-packages/django/db/backends/sqlite3/base.py
+def check_sqlite_version():
+    # if Database.sqlite_version_info < (3, 8, 3):
+    if Database.sqlite_version_info < (3, 6, 3):
+        raise ImproperlyConfigured('SQLite 3.8.3 or later is required(found %s).' % Database.sqlite_version)
+
+centos7防火墙
+systemctl stop firewalld    关闭防火墙
+systemctl status firewalld      查看情况
+iptables -F   清空防火墙规则链
+iptables -L    查看
+
+ps aux | grep -i manage      查看进程
+kill     缓慢关闭进程，kill -15
+kill -9       加pid，强制杀死进程
+
+curl url    url代表任意网址，获取网页源代码代码
+curl -I url    返回这个网页的header
+curl -i url    返回网页header + 内容
+
+《多进程运行》
+pip install supervisor     虚拟环境下安装多进程模块应用
+echo_supervisord_conf > supervisord.conf   虚拟文件同目录下，生成配置文件
+vi supervisord.conf    修改配置文件
+更改以下两行，文件中分号;为注释符，去掉后更改为以下样式
+[include]
+files =/etc/supervisor/*.conf
+拷贝配置文件到指定位置
+cp supervisord.conf /etc/
+cd /etc
+etc下创建文件夹，其中vi创建文本
+vi django.conf    建立、编辑文本
+配置文件内容放在：nginx.conf_未配置nginx
+
+样本（不全）
+[group:djangos]
+programs=django-8000,django-8001,django-8002,django-8003
+
+[program:django-8000]
+command=/home/hello/pythonnodes/testdemo-envv/bin/python3.7 /home/hello/pythonnodes/testdemo/manage.py runserver 0.0.0.0:8000
+directory=/home/hello/pythonnodes/testdemo
+user=root
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/home/hello/pythonnodes/testdemo/django.log
+Loglevel=info
+设置端口号，要每个都有对应，端口号的设置基本一致
+
+systemctl stop firewalld    关闭防火墙
+supervisord -c /etc/supervisord.conf    启动配置文件，相当于启动源文件下的manage,py
+ps aux | grep supervisord    查看运行情况
+supervisorctl   查看进程状态
+
+安装编译工具和库
+可以使用建立一个存放文件的位置
+/home/hello/downloads
+yum -y install make zlib zlib-devel gcc-c++ libtool  openssl openssl-devel
+安装pcre
+wget http://downloads.sourceforge.net/project/pcre/pcre/8.35/pcre-8.35.tar.gz
+tar zxvf pcre-8.35.tar.gz    解压
+cd pcre-8.35
+./configure      不指定路径会配置在当前位置
+make 
+make install
+pcre-config --version
+
+安装nginx
+cd /home/hello/downloads
+wget http://nginx.org/download/nginx-1.6.2.tar.gz
+tar zxvf nginx-1.6.2.tar.gz
+cd nginx-1.6.2
+./configure 
+make
+make install
+whereis nginx     查看安装的路径
+cd /usr/local/nginx
+cd sbin     找到 sbin文件进入
+./nginx -v   查看版本
+
+配置nginx
+groupadd www     设置组名：www
+useradd -g www www    设置组www内用户名：www
+passwd www 设置用户www密码
+/etc下的passwd文件中记录用户以及密码
+whereis nginx
+cd /usr/local/nginx/conf    目录下寻找nginx.conf文件vi配置
+配置文件内容放在：nginx.conf_已配置nginx
+
+
+pycharm上settings.py文件，设置静态文件复制的位置
+# 将文件中的静态文件复制到指定位置
+STATIC_ROOT = 'D:\文件夹\桌面\\testdemostatic'
+终端ternimal上收集静态文件复制到对应目录下
+python manage.py 
+python manage.py collectstatic
+提取后将其放在，推荐放在linux指定用户目录下，static文件，用来调用
+
+./nginx -t   sbin下，验证nginx.conf配置文件是否正确
+
+ps -ef|grep nginx    查看进程
+./nginx -s reload   重启
+./nginx -c /usr/local/nginx/conf/nginx.conf    加载配置文件
+./nginx -s stop
+只需要./nginx既可以启动服务器，需要在虚拟环境中启动supervisor模块
+
+最后输入网址的时候，加上端口号后，无法调用css\js的各种样式
+只能ip加admin,
+即使要加端口号，只能加80作为端口号，配置文件上设置的80端口
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

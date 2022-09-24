@@ -1,0 +1,38 @@
+[group:djangos]
+programs=django-8000,django-8001,django-8002,django-8003
+
+[program:django-8000]
+command=/home/hello/pythonnodes/testdemo-envv/bin/python3.7 /home/hello/pythonnodes/testdemo/manage.py runserver 0.0.0.0:8000
+directory=/home/hello/pythonnodes/testdemo
+user=root
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/home/hello/pythonnodes/testdemo/django.log
+Loglevel=info
+
+[program:django-8001]
+command=/home/hello/pythonnodes/testdemo-envv/bin/python3.7 /home/hello/pythonnodes/testdemo/manage.py runserver 0.0.0.0:8001
+directory=/home/hello/pythonnodes/testdemo
+user=root
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/home/hello/pythonnodes/testdemo/django.log
+Loglevel=info
+
+[program:django-8002]
+command=/home/hello/pythonnodes/testdemo-envv/bin/python3.7 /home/hello/pythonnodes/testdemo/manage.py runserver 0.0.0.0:8002
+directory=/home/hello/pythonnodes/testdemo
+user=root
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/home/hello/pythonnodes/testdemo/django.log
+Loglevel=info
+
+[program:django-8003]
+command=/home/hello/pythonnodes/testdemo-envv/bin/python3.7 /home/hello/pythonnodes/testdemo/manage.py runserver 0.0.0.0:8003
+directory=/home/hello/pythonnodes/testdemo
+user=root
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/home/hello/pythonnodes/testdemo/django.log
+Loglevel=info
